@@ -62,11 +62,11 @@ Install_packages(){
         read -p "Default virtual enviroment meneger? 
         [1] venv 
         [2] pipenv
-        [3] poetry" venv_manager
+        [3] poetry
+        " venv_manager
 
         if [[ $venv_manager == "1" ]]; then
             loop_again="false"
-            Install_package python3-venv
             Create_venv_venv
         elif [[ $venv_manager == "2" ]]; then
             loop_again="false"

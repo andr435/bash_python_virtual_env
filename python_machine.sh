@@ -173,7 +173,7 @@ DESCRIPTION
  OPTIONS
 	-h|--help          Print this help
 	-v|--version       Show version
-    -d|--directory     Work directory. Create vitrual enviroment in this directory
+        -d|--directory     Work directory. Create vitrual enviroment in this directory
 
  	"
 

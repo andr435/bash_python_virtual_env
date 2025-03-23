@@ -46,7 +46,7 @@ Update_system(){
 Install_packages(){
     # Install python packages and venv manager
     local pre_requirement=(epel-release)
-    local p_modules=(python3 python3-pip pipx makeself sqlite3)
+    local p_modules=(python3 python3-pip pipx makeself sqlite)
     
     for item in "${pre_requirement[@]}"; do
         Install_package "$item"

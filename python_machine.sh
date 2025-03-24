@@ -112,7 +112,7 @@ Create_work_directory(){
 Create_venv_venv(){
     local venv_path=${work_directory}/"$default_venv_directory"
     Create_work_directory
-    su -c "python -m "$venv_path"" "$real_user"
+    su -c "python -m venv "$venv_path"" "$real_user"
     su -c "source "${venv_path}"/bin/activate" "$real_user"
 
     return 0

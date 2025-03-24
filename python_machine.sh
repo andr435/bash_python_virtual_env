@@ -59,11 +59,11 @@ Install_packages(){
     local loop_again="true"
 
     while [[ $loop_again != "false" ]]; do
-        read -p "Default virtual enviroment meneger? 
+        read -p " 
         [1] venv 
         [2] pipenv
         [3] poetry
-        " venv_manager
+        Choose virtual enviroment maneger for project? " venv_manager
 
         if [[ $venv_manager == "1" ]]; then
             loop_again="false"
@@ -106,14 +106,14 @@ Create_work_directory(){
         return 0
     fi
 
-    su "$real_user" -c mkdir -p "$work_directory" 
+    su -c "mkdir -p "$work_directory"" "$real_user" 
 }
 
 Create_venv_venv(){
     local venv_path=${work_directory}/"$default_venv_directory"
     Create_work_directory
-    su "$real_user" -c python -m "$venv_path"
-    su "$real_user" -c source "${venv_path}"/bin/activate
+    su -c "python -m "$venv_path"" "$real_user"
+    su -c "source "${venv_path}"/bin/activate" "$real_user"
 
     return 0
 }
@@ -122,7 +122,7 @@ Create_venv_venv(){
 Create_venv_pipenv(){
     Create_work_directory
     cd "$work_directory"
-    su "$real_user" -c pipenv shell
+    su -c "pipenv shell" "$real_user"
 
     return 0
 }
@@ -133,8 +133,8 @@ Create_venv_poetry(){
     local project_name="demo"
     read -p "Project name? " project_name
     cd "$work_directory"
-    su "$real_user" -c poetry new "$project_name"
-    su "$real_user" -c eval $(poetry env activate)
+    su -c "poetry new "$project_name"" "$real_user"
+    su -c "eval $(poetry env activate)" "$real_user"
 
     return 0
 }
@@ -143,11 +143,11 @@ Install_project_packages(){
     local project_pack=(flask flask-sqlalchemy flask-alchemyview bootstrap-flask quart db-sqlite3)
     
     if [[ $venv_manager == "1" ]]; then
-        su "$real_user" -c pip install "${project_pack[@]}"
+        su -c "pip install "${project_pack[@]}"" "$real_user"
     elif [[ $venv_manager == "2" ]]; then
-        su "$real_user" -c pipenv install "${project_pack[@]}"
+        su -c "pipenv install "${project_pack[@]}"" "$real_user"
     elif [[ $venv_manager == "3" ]]; then
-        su "$real_user" -c poetry add "${project_pack[@]}"
+        su -c "poetry add "${project_pack[@]}"" "$real_user"
     fi
 
     return 0

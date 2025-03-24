@@ -106,59 +106,49 @@ Create_work_directory(){
         return 0
     fi
 
-    mkdir -p "$work_directory" 
+    su "$real_user" -c mkdir -p "$work_directory" 
 }
 
 Create_venv_venv(){
-    su - "$real_user"
     local venv_path=${work_directory}/"$default_venv_directory"
     Create_work_directory
-    python -m "$venv_path"
-    source "${venv_path}"/bin/activate
-    
-    su - "$run_user"
+    su "$real_user" -c python -m "$venv_path"
+    su "$real_user" -c source "${venv_path}"/bin/activate
 
     return 0
 }
 
 
 Create_venv_pipenv(){
-    su - "$real_user"
     Create_work_directory
     cd "$work_directory"
-    pipenv shell
+    su "$real_user" -c pipenv shell
 
-    su - "$run_user"
     return 0
 }
 
 
 Create_venv_poetry(){
-    su - "$real_user"
     Create_work_directory
     local project_name="demo"
     read -p "Project name? " project_name
     cd "$work_directory"
-    poetry new "$project_name"
-    eval $(poetry env activate)
+    su "$real_user" -c poetry new "$project_name"
+    su "$real_user" -c eval $(poetry env activate)
 
-    su - "$run_user"
     return 0
 }
 
 Install_project_packages(){
     local project_pack=(flask flask-sqlalchemy flask-alchemyview bootstrap-flask quart db-sqlite3)
-    su - "$real_user"
-
-    if [[ $venv_manager == "1" ]]; then
-        pip install "${project_pack[@]}"
-    elif [[ $venv_manager == "2" ]]; then
-        pipenv install "${project_pack[@]}"
-    elif [[ $venv_manager == "3" ]]; then
-        poetry add "${project_pack[@]}"
-    fi
     
-    su - "$run_user"
+    if [[ $venv_manager == "1" ]]; then
+        su "$real_user" -c pip install "${project_pack[@]}"
+    elif [[ $venv_manager == "2" ]]; then
+        su "$real_user" -c pipenv install "${project_pack[@]}"
+    elif [[ $venv_manager == "3" ]]; then
+        su "$real_user" -c poetry add "${project_pack[@]}"
+    fi
 
     return 0
 }
@@ -223,6 +213,7 @@ Main(){
                 ;;
             -d | --directory )
                 work_directory="$2"
+                echo "$work_directory"
                 shift
                 ;;
 

@@ -69,13 +69,13 @@ Choose virtual enviroment maneger for project: " venv_manager
             loop_again="false"
             Create_venv_venv
         elif [[ $venv_manager == "2" ]]; then
-            loop_again="false"
-            pip install pipenv
+            loop_again="false" 
+            su -c "pip install pipenv" "$real_user" # --no-warn-script-location
+	    export PATH=/usr/local/bin:$PATH
             Create_venv_pipenv
         elif [[ $venv_manager == "3" ]]; then
             loop_again="false"
             pipx install poetry
-            poetry completions bash >> ~/.bash_completion
             Create_venv_poetry
         else 
             echo "incorect choise"
@@ -106,14 +106,13 @@ Create_work_directory(){
         return 0
     fi
 
-    -u "$real_user" mkdir -p "$work_directory" 
+    sudo -u "$real_user" mkdir -p "$work_directory" 
 }
 
 Create_venv_venv(){
     local venv_path=${work_directory}/"$default_venv_directory"
     Create_work_directory
-    -u "$real_user" python -m venv "$venv_path"
-    -u "$real_user" source "${venv_path}"/bin/activate
+    sudo -u "$real_user" python -m venv "$venv_path"
 
     return 0
 }
@@ -122,7 +121,7 @@ Create_venv_venv(){
 Create_venv_pipenv(){
     Create_work_directory
     cd "$work_directory"
-    -u "$real_user" pipenv shell
+    su -c "pipenv install" "$real_user"
 
     return 0
 }
@@ -133,21 +132,23 @@ Create_venv_poetry(){
     local project_name="demo"
     read -p "Project name? " project_name
     cd "$work_directory"
-    -u "$real_user" poetry new "$project_name"
-    -u "$real_user" eval $(poetry env activate)
+    sudo -u "$real_user" poetry new "$project_name"
+    sudo -u "$real_user" eval $(poetry env activate)
 
     return 0
 }
 
 Install_project_packages(){
-    local project_pack=(flask flask-sqlalchemy flask-alchemyview bootstrap-flask quart db-sqlite3)
-    
+    local project_pack="flask flask-sqlalchemy flask-alchemyview bootstrap-flask quart db-sqlite3"
+    local venv_path=${work_directory}/"$default_venv_directory"
+
     if [[ $venv_manager == "1" ]]; then
-        -u "$real_user" pip install "${project_pack[@]}"
+        sudo -u "$real_user" "$venv_path"/bin/python -m pip install "${project_pack}"
+	echo "To activate virtual enviroment run command: ${venv_path}/bin/activate"
     elif [[ $venv_manager == "2" ]]; then
-        -u "$real_user" "pipenv install "${project_pack[@]}"
+        su -c "pipenv install ${project_pack}" "$real_user"
     elif [[ $venv_manager == "3" ]]; then
-        -u "$real_user" "poetry add "${project_pack[@]}"
+        sudo -u "$real_user" poetry add "${project_pack[@]}"
     fi
 
     return 0

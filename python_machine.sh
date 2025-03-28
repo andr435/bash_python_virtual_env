@@ -52,6 +52,8 @@ Install_packages(){
         Install_package "$item"
     done
 
+    /usr/bin/crb
+    
     for item in "${p_modules[@]}"; do
         Install_package "$item"
     done
@@ -76,8 +78,8 @@ Choose virtual enviroment maneger for project: " venv_manager
             Create_venv_pipenv
         elif [[ $venv_manager == "3" ]]; then
             loop_again="false"
-            pipx install poetry
-	        pipx ensurepath
+            sudo -u "$real_user" pipx install poetry
+	        sudo -u "$real_user" pipx ensurepath
             Create_venv_poetry
         else 
             echo "incorect choise"

@@ -37,7 +37,14 @@ Update_system(){
 	echo System update
 
 	set +o errexit
-	yum check-update; yum update -y
+
+    # add fedora repositories
+    dnf config-manager --add-repo https://download.fedoraproject.org/pub/fedora/linux/releases/39/Everything/x86_64/os/
+	dnf config-manager --add-repo https://download.fedoraproject.org/pub/fedora/linux/releases/39/Modular/x86_64/os/
+    dnf clean all
+    dnf makecache
+
+    yum check-update; yum update -y
 	set -o errexit
     
     return 0
@@ -46,7 +53,7 @@ Update_system(){
 Install_packages(){
     # Install python packages and venv manager
     local pre_requirement=(epel-release)
-    local p_modules=(python3 python3-pip pipx makeself sqlite)
+    local p_modules=(python3 python3-pip pipx makeself sqlite dnf pipenv)
     
     for item in "${pre_requirement[@]}"; do
         Install_package "$item"
@@ -70,8 +77,6 @@ Choose virtual enviroment maneger for project: " venv_manager
             Create_venv_venv
         elif [[ $venv_manager == "2" ]]; then
             loop_again="false" 
-            su -c "pip install pipenv" "$real_user" # --no-warn-script-location
-	    export PATH=/usr/local/bin:$PATH
             Create_venv_pipenv
         elif [[ $venv_manager == "3" ]]; then
             loop_again="false"
@@ -106,13 +111,13 @@ Create_work_directory(){
         return 0
     fi
 
-    sudo -u "$real_user" mkdir -p "$work_directory" 
+    sudo -u "$real_user" mkdir -p ${work_directory} 
 }
 
 Create_venv_venv(){
     local venv_path=${work_directory}/"$default_venv_directory"
     Create_work_directory
-    sudo -u "$real_user" python -m venv "$venv_path"
+    sudo -u "$real_user" python -m venv {$venv_path}
 
     return 0
 }
@@ -143,12 +148,12 @@ Install_project_packages(){
     local venv_path=${work_directory}/"$default_venv_directory"
 
     if [[ $venv_manager == "1" ]]; then
-        sudo -u "$real_user" "$venv_path"/bin/python -m pip install "${project_pack}"
+        sudo -u "$real_user" "$venv_path"/bin/python -m pip install ${project_pack}
 	echo "To activate virtual enviroment run command: ${venv_path}/bin/activate"
     elif [[ $venv_manager == "2" ]]; then
         su -c "pipenv install ${project_pack}" "$real_user"
     elif [[ $venv_manager == "3" ]]; then
-        sudo -u "$real_user" poetry add "${project_pack[@]}"
+        sudo -u "$real_user" poetry add ${project_pack[@]}
     fi
 
     return 0

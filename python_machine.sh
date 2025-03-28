@@ -37,13 +37,6 @@ Update_system(){
 	echo System update
 
 	set +o errexit
-
-    # add fedora repositories
-    dnf config-manager --add-repo https://download.fedoraproject.org/pub/fedora/linux/releases/39/Everything/x86_64/os/
-	dnf config-manager --add-repo https://download.fedoraproject.org/pub/fedora/linux/releases/39/Modular/x86_64/os/
-    dnf clean all
-    dnf makecache
-
     yum check-update; yum update -y
 	set -o errexit
     
@@ -53,7 +46,7 @@ Update_system(){
 Install_packages(){
     # Install python packages and venv manager
     local pre_requirement=(epel-release)
-    local p_modules=(python3 python3-pip pipx makeself sqlite dnf pipenv)
+    local p_modules=(python3 pipx makeself sqlite)
     
     for item in "${pre_requirement[@]}"; do
         Install_package "$item"
@@ -77,6 +70,8 @@ Choose virtual enviroment maneger for project: " venv_manager
             Create_venv_venv
         elif [[ $venv_manager == "2" ]]; then
             loop_again="false" 
+            python3 -m pip install --upgrade pip
+            sudo -u "$real_user" python3.9 -m pip install -U pipenv
             Create_venv_pipenv
         elif [[ $venv_manager == "3" ]]; then
             loop_again="false"

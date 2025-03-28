@@ -46,7 +46,7 @@ Update_system(){
 Install_packages(){
     # Install python packages and venv manager
     local pre_requirement=(epel-release)
-    local p_modules=(python3 pipx makeself sqlite)
+    local p_modules=(python3 python3-pip pipx makeself sqlite)
     
     for item in "${pre_requirement[@]}"; do
         Install_package "$item"
@@ -72,10 +72,12 @@ Choose virtual enviroment maneger for project: " venv_manager
             loop_again="false" 
             python3 -m pip install --upgrade pip
             sudo -u "$real_user" python3.9 -m pip install -U pipenv
+	    export PATH=$PATH:home/${real_user}/.local/bin
             Create_venv_pipenv
         elif [[ $venv_manager == "3" ]]; then
             loop_again="false"
             pipx install poetry
+	        pipx ensurepath
             Create_venv_poetry
         else 
             echo "incorect choise"
@@ -121,7 +123,7 @@ Create_venv_venv(){
 Create_venv_pipenv(){
     Create_work_directory
     cd "$work_directory"
-    su -c "pipenv install" "$real_user"
+    su -c "/home/${real_user}/.local/bin/pipenv install" "$real_user"
 
     return 0
 }
@@ -146,7 +148,7 @@ Install_project_packages(){
         sudo -u "$real_user" "$venv_path"/bin/python -m pip install ${project_pack}
 	echo "To activate virtual enviroment run command: ${venv_path}/bin/activate"
     elif [[ $venv_manager == "2" ]]; then
-        su -c "pipenv install ${project_pack}" "$real_user"
+        su -c "/home/${real_user}/.local/bin/pipenv install ${project_pack}" "$real_user"
     elif [[ $venv_manager == "3" ]]; then
         sudo -u "$real_user" poetry add ${project_pack[@]}
     fi

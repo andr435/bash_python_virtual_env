@@ -139,8 +139,6 @@ Create_venv_poetry(){
     read -p "Project name? " project_name
     cd "$work_directory"
     sudo -u "$real_user" /home/${real_user}/.local/bin/poetry new "$project_name"
-    cd "${project_name}"
-    su -c "eval $(/home/${real_user}/.local/bin/poetry env activate)" "$real_user"
     cd "$work_directory"/"$project_name"
     return 0
 }

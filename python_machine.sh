@@ -141,7 +141,7 @@ Create_venv_poetry(){
     sudo -u "$real_user" /home/${real_user}/.local/bin/poetry new "$project_name"
     cd "${project_name}"
     su -c "eval $(/home/${real_user}/.local/bin/poetry env activate)" "$real_user"
-    cd "$project_name"
+    cd "$work_directory"/"$project_name"
     return 0
 }
 
@@ -157,12 +157,13 @@ Install_project_packages(){
         sudo -u "$real_user" "$venv_path"/bin/python -m pip install ${project_pack}
 	    echo "To activate virtual enviroment run command: ${venv_path}/bin/activate"
     elif [[ $venv_manager == "2" ]]; then
-        su -c "/home/${real_user}/.local/bin/pipenv run pip install "setuptools<58.0.0"" "$real_user"
-	    su -c "/home/${real_user}/.local/bin/pipenv install ${packages_depricated}" "$real_user"
+        su -c "/home/${real_user}/.local/bin/pipenv run pip install 'setuptools<58.0.0'" "$real_user"
+	    su -c "/home/${real_user}/.local/bin/pipenv run pip install ${packages_depricated}" "$real_user"
         su -c "/home/${real_user}/.local/bin/pipenv install ${project_pack}" "$real_user"
     elif [[ $venv_manager == "3" ]]; then
-	    sudo -u "$real_user" /home/${real_user}/.local/bin/poetry run pip install "setuptools<58.0.0"
-	    sudo -u "$real_user" /home/${real_user}/.local/bin/poetry add install "${packages_depricated}"
+	    python -m pip install "setuptools<58.0.0" --no-cache-dir
+	    sudo -u "$real_user" /home/${real_user}/.local/bin/poetry run pip install "setuptools<58.0.0" --no-cache-dir
+	    sudo -u "$real_user" /home/${real_user}/.local/bin/poetry run pip install ${packages_depricated}
         sudo -u "$real_user" /home/${real_user}/.local/bin/poetry add ${project_pack}
     fi
 

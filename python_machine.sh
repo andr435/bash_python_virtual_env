@@ -5,19 +5,18 @@
 # Purpose: Install python 3 packages, virtual enviroment manager.
 # Create and activate virtual enviroment in given directory or in current directory if nothing given.
 # Date: 21-03-2025
-# Version: 1.0.0
+# Version: 1.1.0
 ################################################
 set -o errexit
 set -o pipefail
 set -o nounset
 ################################################
 
-script_version=1.0.0
+script_version=1.1.0
 script_name=python_machine.sh
 work_directory="."
 default_venv_directory=".venv"
 real_user=${SUDO_USER:-$(whoami)}
-run_user=$(whoami)
 
 . /etc/os-release
 
@@ -27,7 +26,6 @@ Destruct(){
     unset work_directory
     unset default_venv_directory
     unset real_user
-    unset run_user
 
     return 0    
 }
@@ -37,7 +35,7 @@ Update_system(){
 	echo System update
 
 	set +o errexit
-	yum check-update; yum update -y
+    yum check-update; yum update -y
 	set -o errexit
     
     return 0
@@ -52,30 +50,36 @@ Install_packages(){
         Install_package "$item"
     done
 
+    /usr/bin/crb enable
+    
     for item in "${p_modules[@]}"; do
         Install_package "$item"
     done
-
+	
+    python3 -m pip install --upgrade pip setuptools wheel
+	python -m pip install "setuptools<58.0.0" --no-cache-dir
     local loop_again="true"
 
     while [[ $loop_again != "false" ]]; do
-        read -p "Default virtual enviroment meneger? 
-        [1] venv 
-        [2] pipenv
-        [3] poetry
-        " venv_manager
+        read -p " 
+[1] venv 
+[2] pipenv
+[3] poetry
+Choose virtual enviroment maneger for project: " venv_manager
 
         if [[ $venv_manager == "1" ]]; then
             loop_again="false"
             Create_venv_venv
         elif [[ $venv_manager == "2" ]]; then
-            loop_again="false"
-            pip install pipenv
+            loop_again="false" 
+            sudo -u "$real_user" python3.9 -m pip install -U pipenv
+	        export PATH=$PATH:home/${real_user}/.local/bin
             Create_venv_pipenv
         elif [[ $venv_manager == "3" ]]; then
             loop_again="false"
-            pipx install poetry
-            poetry completions bash >> ~/.bash_completion
+            sudo -u "$real_user" pipx install poetry
+	        sudo -u "$real_user" pipx ensurepath
+		    export PATH
             Create_venv_poetry
         else 
             echo "incorect choise"
@@ -106,59 +110,59 @@ Create_work_directory(){
         return 0
     fi
 
-    mkdir -p "$work_directory" 
+    sudo -u "$real_user" mkdir -p ${work_directory} 
+
+    return 0
 }
 
 Create_venv_venv(){
-    su - "$real_user"
     local venv_path=${work_directory}/"$default_venv_directory"
     Create_work_directory
-    python -m "$venv_path"
-    source "${venv_path}"/bin/activate
-    
-    su - "$run_user"
+    sudo -u "$real_user" python -m venv ${venv_path}
 
     return 0
 }
 
 
 Create_venv_pipenv(){
-    su - "$real_user"
     Create_work_directory
     cd "$work_directory"
-    pipenv shell
+    su -c "/home/${real_user}/.local/bin/pipenv install" "$real_user"
 
-    su - "$run_user"
     return 0
 }
 
 
 Create_venv_poetry(){
-    su - "$real_user"
     Create_work_directory
     local project_name="demo"
     read -p "Project name? " project_name
     cd "$work_directory"
-    poetry new "$project_name"
-    eval $(poetry env activate)
-
-    su - "$run_user"
+    sudo -u "$real_user" /home/${real_user}/.local/bin/poetry new "$project_name"
+    cd "$work_directory"/"$project_name"
     return 0
 }
 
 Install_project_packages(){
-    local project_pack=(flask flask-sqlalchemy flask-alchemyview bootstrap-flask quart db-sqlite3)
-    su - "$real_user"
+    # depricated with 'use_2to3' dependecy, install first
+    local packages_depricated="dictalchemy flask-alchemyview"
+    local project_pack="flask flask-sqlalchemy bootstrap-flask quart db-sqlite3"
+    local venv_path=${work_directory}/"$default_venv_directory"
 
     if [[ $venv_manager == "1" ]]; then
-        pip install "${project_pack[@]}"
+	    sudo -u "$real_user" "$venv_path"/bin/python -m pip install "setuptools<58.0.0"
+	    sudo -u "$real_user" "$venv_path"/bin/python -m pip install ${packages_depricated}
+        sudo -u "$real_user" "$venv_path"/bin/python -m pip install ${project_pack}
+	    echo "To activate virtual enviroment run command: ${venv_path}/bin/activate"
     elif [[ $venv_manager == "2" ]]; then
-        pipenv install "${project_pack[@]}"
+        su -c "/home/${real_user}/.local/bin/pipenv run pip install 'setuptools<58.0.0'" "$real_user"
+	    su -c "/home/${real_user}/.local/bin/pipenv run pip install ${packages_depricated}" "$real_user"
+        su -c "/home/${real_user}/.local/bin/pipenv install ${project_pack}" "$real_user"
     elif [[ $venv_manager == "3" ]]; then
-        poetry add "${project_pack[@]}"
+	    su -c "/home/${real_user}/.local/bin/poetry run pip install 'setuptools<58.0.0' --no-cache-dir" "$real_user"
+	    su -c  "/home/${real_user}/.local/bin/poetry run pip install ${packages_depricated}" "$real_user"
+        su -c "/home/${real_user}/.local/bin/poetry add ${project_pack}" "$real_user"
     fi
-    
-    su - "$run_user"
 
     return 0
 }
@@ -178,7 +182,7 @@ DESCRIPTION
  OPTIONS
 	-h|--help          Print this help
 	-v|--version       Show version
-        -d|--directory     Work directory. Create vitrual enviroment in this directory
+    -d|--directory     Work directory. Create vitrual enviroment in this directory
 
  	"
 
@@ -223,6 +227,7 @@ Main(){
                 ;;
             -d | --directory )
                 work_directory="$2"
+                echo "$work_directory"
                 shift
                 ;;
 

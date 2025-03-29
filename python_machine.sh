@@ -57,7 +57,7 @@ Install_packages(){
     done
 	
     python3 -m pip install --upgrade pip setuptools wheel
-
+	python -m pip install "setuptools<58.0.0" --no-cache-dir
     local loop_again="true"
 
     while [[ $loop_again != "false" ]]; do
@@ -161,10 +161,9 @@ Install_project_packages(){
 	    su -c "/home/${real_user}/.local/bin/pipenv run pip install ${packages_depricated}" "$real_user"
         su -c "/home/${real_user}/.local/bin/pipenv install ${project_pack}" "$real_user"
     elif [[ $venv_manager == "3" ]]; then
-	    python -m pip install "setuptools<58.0.0" --no-cache-dir
-	    sudo -u "$real_user" /home/${real_user}/.local/bin/poetry run pip install "setuptools<58.0.0" --no-cache-dir
-	    sudo -u "$real_user" /home/${real_user}/.local/bin/poetry run pip install ${packages_depricated}
-        sudo -u "$real_user" /home/${real_user}/.local/bin/poetry add ${project_pack}
+	    su -c "/home/${real_user}/.local/bin/poetry run pip install 'setuptools<58.0.0' --no-cache-dir" "$real_user"
+	    su -c  "/home/${real_user}/.local/bin/poetry run pip install ${packages_depricated}" "$real_user"
+        su -c "/home/${real_user}/.local/bin/poetry add ${project_pack}" "$real_user"
     fi
 
     return 0
